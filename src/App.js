@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Actor from "./Actor";
 import "./App.css";
 
 const baseURL = "https://switch-yam-equator.azurewebsites.net/api/";
@@ -25,68 +26,39 @@ const getMovies = async () => {
 };
 
 const getCombinedActors = async () => {
-   let cageFilmActors = [];
-   let reevesFilmActors = [];
-   let combinedActors = [];
-   let finalResult = [];
-
-   let unique = (a) => [...new Set(a)];
-
    const movies = await getMovies();
    const actors = await getActorIds();
 
    const cage = actors.find((actor) => actor.name === "Nicolas Cage");
    const reeves = actors.find((actor) => actor.name === "Keanu Reeves");
 
-   movies.filter((movie) => {
-      const movies = Object.values(movie);
-      if (movies[2].includes(cage.actorId)) {
-         movies[2].map((actor) => cageFilmActors.push(actor));
-      } else if (movies[2].includes(reeves.actorId)) {
-         movies[2].map((actor) => reevesFilmActors.push(actor));
+   const arrOfActors = actors.map((actor) => {
+      const c = movies
+         .filter(
+            (movie) =>
+               movie.actors.includes(actor.actorId) &&
+               movie.actors.includes(cage.actorId)
+         )
+         .map((movie) => movie.title);
+
+      const r = movies
+         .filter(
+            (movie) =>
+               movie.actors.includes(actor.actorId) &&
+               movie.actors.includes(reeves.actorId)
+         )
+         .map((movie) => movie.title);
+
+      if (c.length !== 0 && r.length !== 0) {
+         return {
+            Name: actor.name,
+            KRM: r,
+            NCM: c,
+         };
       }
    });
 
-   cageFilmActors.forEach((actor) => {
-      let ids = [];
-      if (reevesFilmActors.includes(actor)) {
-         ids.push(actor);
-         actors.map((actor) => {
-            ids.forEach((id) => {
-               if (actor.actorId === id) {
-                  combinedActors.push(actor);
-               }
-            });
-         });
-      }
-   });
-
-   combinedActors = unique(combinedActors);
-
-   combinedActors.forEach((actor) => {
-      let result = {
-         Name: `${actor.name}`,
-         KRMovies: [],
-         NCMovies: [],
-      };
-
-      movies.forEach((movie) => {
-         if (
-            movie.actors.includes(actor.actorId) &&
-            movie.actors.includes(cage.actorId)
-         ) {
-            result.NCMovies.push(movie.title);
-         } else if (
-            movie.actors.includes(actor.actorId) &&
-            movie.actors.includes(reeves.actorId)
-         ) {
-            result.KRMovies.push(movie.title);
-         }
-      });
-      finalResult.push(result);
-   });
-
-   return JSON.stringify(finalResult);
+   return arrOfActors.filter((actor) => actor !== undefined);
 };
 
 const App = () => {
@@ -94,9 +66,9 @@ const App = () => {
 
    const checkResults = async () => {
       const actorData = await getCombinedActors();
-      console.log(actorData);
       const data = { data: actorData };
-      const res = await axios.post("validation", data);
+      // const res = await axios.post("validation", data); *Getting 400 error although I believe I have the right data*
+      setActors(actorData);
    };
 
    useEffect(() => {
@@ -105,7 +77,10 @@ const App = () => {
 
    return (
       <div className="App">
-         <h1>hello</h1>
+         <ul>
+            {actors &&
+               actors.map((actor) => <Actor key={actor.Name} actor={actor} />)}
+         </ul>
       </div>
    );
 };
