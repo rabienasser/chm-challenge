@@ -29,29 +29,31 @@ const getCombinedActors = async () => {
    const movies = await getMovies();
    const actors = await getActorIds();
 
-   const cage = actors.find((actor) => actor.name === "Nicolas Cage");
-   const reeves = actors.find((actor) => actor.name === "Keanu Reeves");
+   const { actorId: cageId } = actors.find(
+      (actor) => actor.name === "Nicolas Cage"
+   );
+   const { actorId: reevesId } = actors.find(
+      (actor) => actor.name === "Keanu Reeves"
+   );
 
-   const arrOfActors = actors.map((actor) => {
+   const arrOfActors = actors.map(({ actorId, name }) => {
       const c = movies
          .filter(
             (movie) =>
-               movie.actors.includes(actor.actorId) &&
-               movie.actors.includes(cage.actorId)
+               movie.actors.includes(actorId) && movie.actors.includes(cageId)
          )
          .map((movie) => movie.title);
 
       const r = movies
          .filter(
             (movie) =>
-               movie.actors.includes(actor.actorId) &&
-               movie.actors.includes(reeves.actorId)
+               movie.actors.includes(actorId) && movie.actors.includes(reevesId)
          )
          .map((movie) => movie.title);
 
       if (c.length !== 0 && r.length !== 0) {
          return {
-            Name: actor.name,
+            Name: name,
             KRM: r,
             NCM: c,
          };
